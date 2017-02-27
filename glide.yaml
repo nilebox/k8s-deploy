@@ -1,0 +1,6 @@
+package: github.com/nilebox/k8s-deploy
+import:
+- package: k8s.io/client-go
+  version: v2.0.0
+- package: k8s.io/apimachinery
+  version: master
