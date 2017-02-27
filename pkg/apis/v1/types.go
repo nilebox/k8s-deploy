@@ -1,10 +1,11 @@
 package v1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"encoding/json"
+
 	"k8s.io/client-go/pkg/api"
+	"k8s.io/client-go/pkg/api/meta"
 	"k8s.io/client-go/pkg/api/unversioned"
-	"k8s.io/client-go/pkg/api/v1"
 	v1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
 )
@@ -25,7 +26,7 @@ type Deployment struct {
 	unversioned.TypeMeta `json:",inline"`
 	// Standard object metadata.
 	// +optional
-	v1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	api.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// Specification of the desired behavior of the Deployment.
 	// +optional
@@ -45,7 +46,7 @@ type DeploymentSpec struct {
 	// Label selector for pods. Existing ReplicaSets whose pods are
 	// selected by this will be the ones affected by this deployment.
 	// +optional
-	Selector *metav1.LabelSelector
+	Selector *unversioned.LabelSelector
 
 	// Template describes the pods that will be created.
 	Template api.PodTemplateSpec
@@ -141,4 +142,64 @@ type RollbackConfig struct {
 	// The revision to rollback to. If set to 0, rollbck to the last revision.
 	// +optional
 	Revision int64
+}
+
+// DeploymentList is a list of Deployments.
+type DeploymentList struct {
+	unversioned.TypeMeta `json:",inline"`
+	// Standard list metadata.
+	// +optional
+	unversioned.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Items is the list of Deployments.
+	Items []Deployment `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// Required to satisfy Object interface
+func (e *Deployment) GetObjectKind() unversioned.ObjectKind {
+	return &e.TypeMeta
+}
+
+// Required to satisfy ObjectMetaAccessor interface
+func (e *Deployment) GetObjectMeta() meta.Object {
+	return &e.ObjectMeta
+}
+
+// Required to satisfy Object interface
+func (el *DeploymentList) GetObjectKind() unversioned.ObjectKind {
+	return &el.TypeMeta
+}
+
+// Required to satisfy ListMetaAccessor interface
+func (el *DeploymentList) GetListMeta() unversioned.List {
+	return &el.ListMeta
+}
+
+// The code below is used only to work around a known problem with third-party
+// resources and ugorji. If/when these issues are resolved, the code below
+// should no longer be required.
+
+type DeploymentListCopy DeploymentList
+type DeploymentCopy Deployment
+
+func (e *Deployment) UnmarshalJSON(data []byte) error {
+	tmp := DeploymentCopy{}
+	err := json.Unmarshal(data, &tmp)
+	if err != nil {
+		return err
+	}
+	tmp2 := Deployment(tmp)
+	*e = tmp2
+	return nil
+}
+
+func (el *DeploymentList) UnmarshalJSON(data []byte) error {
+	tmp := DeploymentListCopy{}
+	err := json.Unmarshal(data, &tmp)
+	if err != nil {
+		return err
+	}
+	tmp2 := DeploymentList(tmp)
+	*el = tmp2
+	return nil
 }

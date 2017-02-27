@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/nilebox/k8s-deploy/pkg/apis/v1"
+	deployv1 "github.com/nilebox/k8s-deploy/pkg/apis/v1"
 	"k8s.io/client-go/pkg/api/unversioned"
 	"k8s.io/client-go/pkg/runtime"
 	"k8s.io/client-go/pkg/runtime/serializer"
@@ -10,14 +10,15 @@ import (
 
 func NewClient(cfg *rest.Config) (*rest.RESTClient, *runtime.Scheme, error) {
 	groupVersion := unversioned.GroupVersion{
-		Group:   v1.DeploymentResourceGroup,
-		Version: v1.DeploymentResourceVersion,
+		Group:   deployv1.DeploymentResourceGroup,
+		Version: deployv1.DeploymentResourceVersion,
 	}
 
 	schemeBuilder := runtime.NewSchemeBuilder(func(scheme *runtime.Scheme) error {
 		scheme.AddKnownTypes(
 			groupVersion,
-			&v1.Deployment{},
+			&deployv1.Deployment{},
+			&deployv1.DeploymentList{},
 		)
 		return nil
 	})
