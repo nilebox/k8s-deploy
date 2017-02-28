@@ -61,7 +61,7 @@ func TestCanaryDeployment(t *testing.T) {
 	var deployment deployv1.Deployment
 
 	err = tprclient.Get().
-		Resource("deployments").
+		Resource(deployv1.DeploymentResourcePath).
 		Namespace(api.NamespaceDefault).
 		Name("deploy1").
 		Do().Into(&deployment)
@@ -82,7 +82,7 @@ func TestCanaryDeployment(t *testing.T) {
 
 			var result deployv1.Deployment
 			err = tprclient.Post().
-				Resource("deployments").
+				Resource(deployv1.DeploymentResourcePath).
 				Namespace(api.NamespaceDefault).
 				Body(deployment).
 				Do().Into(&result)
@@ -100,7 +100,7 @@ func TestCanaryDeployment(t *testing.T) {
 
 	// Fetch a list of our TPRs
 	deploymentList := deployv1.DeploymentList{}
-	err = tprclient.Get().Resource("deployments").Do().Into(&deploymentList)
+	err = tprclient.Get().Resource(deployv1.DeploymentResourcePath).Do().Into(&deploymentList)
 	if err != nil {
 		panic(err)
 	}
