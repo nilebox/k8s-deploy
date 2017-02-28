@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	DeploymentDomain        = "k8s-deploy.atlassian.com"
-	DeploymentResourceGroup = DeploymentDomain
+	DeploymentDomain              = "k8s-deploy.atlassian.com"
+	DeploymentResourceDescription = "Custom deployments support (Canary, Blue-green)"
+	DeploymentResourceGroup       = DeploymentDomain
 
 	DeploymentResourcePath         = "deployments"
 	DeploymentResourceName         = "deployment." + DeploymentDomain
