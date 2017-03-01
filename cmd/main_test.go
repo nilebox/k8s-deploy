@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"testing"
+	"time"
 
 	deployv1 "github.com/nilebox/k8s-deploy/pkg/apis/v1"
 	"github.com/nilebox/k8s-deploy/pkg/client"
@@ -19,25 +20,25 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-func TestCanaryDeployment(t *testing.T) {
+func TestCanaryRelease(t *testing.T) {
 	config := configFromEnv(t)
 
 	clientset, err := kubernetes.NewForConfig(config)
 
 	// initialize third party resource if it does not exist
-	tpr, err := clientset.ExtensionsV1beta1().ThirdPartyResources().Get(deployv1.DeploymentResourceName)
+	tpr, err := clientset.ExtensionsV1beta1().ThirdPartyResources().Get(deployv1.ReleaseResourceName)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			fmt.Printf("NOT FOUND: deployments TPR\n")
+			fmt.Printf("NOT FOUND: releases TPR\n")
 
 			tpr := &v1beta1.ThirdPartyResource{
 				ObjectMeta: v1.ObjectMeta{
-					Name: deployv1.DeploymentResourceName,
+					Name: deployv1.ReleaseResourceName,
 				},
 				Versions: []v1beta1.APIVersion{
-					{Name: deployv1.DeploymentResourceVersion},
+					{Name: deployv1.ReleaseResourceVersion},
 				},
-				Description: deployv1.DeploymentResourceDescription,
+				Description: deployv1.ReleaseResourceDescription,
 			}
 
 			result, err := clientset.ExtensionsV1beta1().ThirdPartyResources().Create(tpr)
@@ -45,6 +46,8 @@ func TestCanaryDeployment(t *testing.T) {
 				panic(err)
 			}
 			fmt.Printf("CREATED: %#v\nFROM: %#v\n", result, tpr)
+
+			time.Sleep(10 * time.Second) // Wait until the TPR initialization is finished
 		} else {
 			panic(err)
 		}
@@ -58,33 +61,33 @@ func TestCanaryDeployment(t *testing.T) {
 		panic(err)
 	}
 
-	var deployment deployv1.Deployment
+	var release deployv1.Release
 
 	err = tprclient.Get().
-		Resource(deployv1.DeploymentResourcePath).
+		Resource(deployv1.ReleaseResourcePath).
 		Namespace(api.NamespaceDefault).
-		Name("deploy1").
-		Do().Into(&deployment)
+		Name("release1").
+		Do().Into(&release)
 
 	if err != nil {
 		if errors.IsNotFound(err) {
-			fmt.Printf("NOT FOUND: deployments TPR instance\n")
+			fmt.Printf("NOT FOUND: releases TPR instance\n")
 
 			// Create an instance of our TPR
-			deployment := &deployv1.Deployment{
+			release := &deployv1.Release{
 				ObjectMeta: api.ObjectMeta{
-					Name: "deployment1",
+					Name: "release1",
 				},
-				Spec: deployv1.DeploymentSpec{
+				Spec: deployv1.ReleaseSpec{
 					Replicas: 3,
 				},
 			}
 
-			var result deployv1.Deployment
+			var result deployv1.Release
 			err = tprclient.Post().
-				Resource(deployv1.DeploymentResourcePath).
+				Resource(deployv1.ReleaseResourcePath).
 				Namespace(api.NamespaceDefault).
-				Body(deployment).
+				Body(release).
 				Do().Into(&result)
 
 			if err != nil {
@@ -95,16 +98,16 @@ func TestCanaryDeployment(t *testing.T) {
 			panic(err)
 		}
 	} else {
-		fmt.Printf("GET: %#v\n", deployment)
+		fmt.Printf("GET: %#v\n", release)
 	}
 
 	// Fetch a list of our TPRs
-	deploymentList := deployv1.DeploymentList{}
-	err = tprclient.Get().Resource(deployv1.DeploymentResourcePath).Do().Into(&deploymentList)
+	releaseList := deployv1.ReleaseList{}
+	err = tprclient.Get().Resource(deployv1.ReleaseResourcePath).Do().Into(&releaseList)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("LIST: %#v\n", deploymentList)
+	fmt.Printf("LIST: %#v\n", releaseList)
 }
 
 func configFromEnv(t *testing.T) *rest.Config {

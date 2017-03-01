@@ -11,50 +11,50 @@ import (
 )
 
 const (
-	DeploymentDomain              = "k8s-deploy.atlassian.com"
-	DeploymentResourceDescription = "Custom deployments support (Canary, Blue-green)"
-	DeploymentResourceGroup       = DeploymentDomain
+	ReleaseDomain              = "deploy.k8s"
+	ReleaseResourceDescription = "Custom releases support (Canary, Blue-green)"
+	ReleaseResourceGroup       = ReleaseDomain
 
-	DeploymentResourcePath         = "deployments"
-	DeploymentResourceName         = "deployment." + DeploymentDomain
-	DeploymentResourceVersion      = "v1"
-	DeploymentResourceKind         = "Deployment"
-	DeploymentResourceGroupVersion = DeploymentResourceGroup + "/" + DeploymentResourceVersion
+	ReleaseResourcePath         = "releases"
+	ReleaseResourceName         = "release." + ReleaseDomain
+	ReleaseResourceVersion      = "v1"
+	ReleaseResourceKind         = "Release"
+	ReleaseResourceGroupVersion = ReleaseResourceGroup + "/" + ReleaseResourceVersion
 )
 
-// Deployment enables declarative updates for Pods and ReplicaSets.
-type Deployment struct {
+// Release enables declarative updates for Pods and ReplicaSets.
+type Release struct {
 	unversioned.TypeMeta `json:",inline"`
 	// Standard object metadata.
 	// +optional
 	api.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	// Specification of the desired behavior of the Deployment.
+	// Specification of the desired behavior of the Release.
 	// +optional
-	Spec DeploymentSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	Spec ReleaseSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 
-	// Most recently observed status of the Deployment.
+	// Most recently observed status of the Release.
 	// +optional
 	Status v1beta1.DeploymentStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
 }
 
-type DeploymentSpec struct {
+type ReleaseSpec struct {
 	// Number of desired pods. This is a pointer to distinguish between explicit
 	// zero and not specified. Defaults to 1.
 	// +optional
 	Replicas int32
 
 	// Label selector for pods. Existing ReplicaSets whose pods are
-	// selected by this will be the ones affected by this deployment.
+	// selected by this will be the ones affected by this release.
 	// +optional
 	Selector *unversioned.LabelSelector
 
 	// Template describes the pods that will be created.
 	Template api.PodTemplateSpec
 
-	// The deployment strategy to use to replace existing pods with new ones.
+	// The release strategy to use to replace existing pods with new ones.
 	// +optional
-	Strategy DeploymentStrategy
+	Strategy ReleaseStrategy
 
 	// Minimum number of seconds for which a newly created pod should be ready
 	// without any of its container crashing, for it to be considered available.
@@ -67,51 +67,51 @@ type DeploymentSpec struct {
 	// +optional
 	RevisionHistoryLimit *int32
 
-	// Indicates that the deployment is paused and will not be processed by the
-	// deployment controller.
+	// Indicates that the release is paused and will not be processed by the
+	// release controller.
 	// +optional
 	Paused bool
 
-	// The config this deployment is rolling back to. Will be cleared after rollback is done.
+	// The config this release is rolling back to. Will be cleared after rollback is done.
 	// +optional
 	RollbackTo *RollbackConfig
 
-	// The maximum time in seconds for a deployment to make progress before it
-	// is considered to be failed. The deployment controller will continue to
-	// process failed deployments and a condition with a ProgressDeadlineExceeded
-	// reason will be surfaced in the deployment status. Once autoRollback is
-	// implemented, the deployment controller will automatically rollback failed
-	// deployments. Note that progress will not be estimated during the time a
-	// deployment is paused. This is not set by default.
+	// The maximum time in seconds for a release to make progress before it
+	// is considered to be failed. The release controller will continue to
+	// process failed releases and a condition with a ProgressDeadlineExceeded
+	// reason will be surfaced in the release status. Once autoRollback is
+	// implemented, the release controller will automatically rollback failed
+	// releases. Note that progress will not be estimated during the time a
+	// release is paused. This is not set by default.
 	ProgressDeadlineSeconds *int32
 }
 
-type DeploymentStrategy struct {
-	// Type of deployment. Can be "Recreate" or "RollingUpdate". Default is RollingUpdate.
+type ReleaseStrategy struct {
+	// Type of release. Can be "Recreate" or "RollingUpdate". Default is RollingUpdate.
 	// +optional
-	Type DeploymentStrategyType
+	Type ReleaseStrategyType
 
-	// Rolling update config params. Present only if DeploymentStrategyType =
+	// Rolling update config params. Present only if ReleaseStrategyType =
 	// RollingUpdate.
 	//---
 	// TODO: Update this to follow our convention for oneOf, whatever we decide it
 	// to be.
 	// +optional
-	Canary *CanaryDeployment
+	Canary *CanaryRelease
 }
 
-type DeploymentStrategyType string
+type ReleaseStrategyType string
 
 const (
-	// Manage two native Deployment objects with Canary strategy.
-	CanaryDeploymentStrategyType DeploymentStrategyType = "Canary"
+	// Manage two native Release objects with Canary strategy.
+	CanaryReleaseStrategyType ReleaseStrategyType = "Canary"
 
-	// Manage two native Deployment objects with Blue-green strategy.
-	BlueGreenDeploymentStrategyType DeploymentStrategyType = "BlueGreen"
+	// Manage two native Release objects with Blue-green strategy.
+	BlueGreenReleaseStrategyType ReleaseStrategyType = "BlueGreen"
 )
 
 // Spec to control the desired behavior of rolling update.
-type CanaryDeployment struct {
+type CanaryRelease struct {
 	// The maximum number of pods that can be unavailable during the update.
 	// Value can be an absolute number (ex: 5) or a percentage of total pods at the start of update (ex: 10%).
 	// Absolute number is calculated from percentage by rounding down.
@@ -145,34 +145,34 @@ type RollbackConfig struct {
 	Revision int64
 }
 
-// DeploymentList is a list of Deployments.
-type DeploymentList struct {
+// ReleaseList is a list of Releases.
+type ReleaseList struct {
 	unversioned.TypeMeta `json:",inline"`
 	// Standard list metadata.
 	// +optional
 	unversioned.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	// Items is the list of Deployments.
-	Items []Deployment `json:"items" protobuf:"bytes,2,rep,name=items"`
+	// Items is the list of Releases.
+	Items []Release `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
 // Required to satisfy Object interface
-func (e *Deployment) GetObjectKind() unversioned.ObjectKind {
+func (e *Release) GetObjectKind() unversioned.ObjectKind {
 	return &e.TypeMeta
 }
 
 // Required to satisfy ObjectMetaAccessor interface
-func (e *Deployment) GetObjectMeta() meta.Object {
+func (e *Release) GetObjectMeta() meta.Object {
 	return &e.ObjectMeta
 }
 
 // Required to satisfy Object interface
-func (el *DeploymentList) GetObjectKind() unversioned.ObjectKind {
+func (el *ReleaseList) GetObjectKind() unversioned.ObjectKind {
 	return &el.TypeMeta
 }
 
 // Required to satisfy ListMetaAccessor interface
-func (el *DeploymentList) GetListMeta() unversioned.List {
+func (el *ReleaseList) GetListMeta() unversioned.List {
 	return &el.ListMeta
 }
 
@@ -180,27 +180,27 @@ func (el *DeploymentList) GetListMeta() unversioned.List {
 // resources and ugorji. If/when these issues are resolved, the code below
 // should no longer be required.
 
-type DeploymentListCopy DeploymentList
-type DeploymentCopy Deployment
+type ReleaseListCopy ReleaseList
+type ReleaseCopy Release
 
-func (e *Deployment) UnmarshalJSON(data []byte) error {
-	tmp := DeploymentCopy{}
+func (e *Release) UnmarshalJSON(data []byte) error {
+	tmp := ReleaseCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
 	}
-	tmp2 := Deployment(tmp)
+	tmp2 := Release(tmp)
 	*e = tmp2
 	return nil
 }
 
-func (el *DeploymentList) UnmarshalJSON(data []byte) error {
-	tmp := DeploymentListCopy{}
+func (el *ReleaseList) UnmarshalJSON(data []byte) error {
+	tmp := ReleaseListCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
 	}
-	tmp2 := DeploymentList(tmp)
+	tmp2 := ReleaseList(tmp)
 	*el = tmp2
 	return nil
 }

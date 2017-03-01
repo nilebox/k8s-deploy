@@ -10,15 +10,15 @@ import (
 
 func NewClient(cfg *rest.Config) (*rest.RESTClient, *runtime.Scheme, error) {
 	groupVersion := unversioned.GroupVersion{
-		Group:   deployv1.DeploymentResourceGroup,
-		Version: deployv1.DeploymentResourceVersion,
+		Group:   deployv1.ReleaseResourceGroup,
+		Version: deployv1.ReleaseResourceVersion,
 	}
 
 	schemeBuilder := runtime.NewSchemeBuilder(func(scheme *runtime.Scheme) error {
 		scheme.AddKnownTypes(
 			groupVersion,
-			&deployv1.Deployment{},
-			&deployv1.DeploymentList{},
+			&deployv1.Release{},
+			&deployv1.ReleaseList{},
 		)
 		return nil
 	})
