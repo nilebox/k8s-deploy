@@ -3,111 +3,120 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
 	"testing"
-	"time"
 
-	deployv1 "github.com/nilebox/k8s-deploy/pkg/apis/v1"
-	"github.com/nilebox/k8s-deploy/pkg/client"
-
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/pkg/api"
-	"k8s.io/client-go/pkg/api/errors"
-	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/rest"
+	// deployv1 "github.com/nilebox/k8s-deploy/pkg/apis/v1"
+	// "github.com/nilebox/k8s-deploy/pkg/client"
+	// "k8s.io/client-go/kubernetes"
+	// "k8s.io/client-go/pkg/api"
+	// "k8s.io/client-go/pkg/api/errors"
+	// "k8s.io/client-go/pkg/api/v1"
+	// "k8s.io/client-go/pkg/apis/extensions/v1beta1"
+	// "k8s.io/client-go/rest"
 )
 
 func TestCanaryRelease(t *testing.T) {
+	fmt.Printf("Start\n")
 	config := configFromEnv(t)
 
-	clientset, err := kubernetes.NewForConfig(config)
+	fmt.Printf("Setup context\n")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	// initialize third party resource if it does not exist
-	tpr, err := clientset.ExtensionsV1beta1().ThirdPartyResources().Get(deployv1.ReleaseResourceName)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			fmt.Printf("NOT FOUND: releases TPR\n")
+	fmt.Printf("Run\n")
+	runWithConfig(ctx, config)
+	fmt.Printf("Finish\n")
 
-			tpr := &v1beta1.ThirdPartyResource{
-				ObjectMeta: v1.ObjectMeta{
-					Name: deployv1.ReleaseResourceName,
-				},
-				Versions: []v1beta1.APIVersion{
-					{Name: deployv1.ReleaseResourceVersion},
-				},
-				Description: deployv1.ReleaseResourceDescription,
-			}
+	// clientset, err := kubernetes.NewForConfig(config)
 
-			result, err := clientset.ExtensionsV1beta1().ThirdPartyResources().Create(tpr)
-			if err != nil {
-				panic(err)
-			}
-			fmt.Printf("CREATED: %#v\nFROM: %#v\n", result, tpr)
+	// // initialize third party resource if it does not exist
+	// tpr, err := clientset.ExtensionsV1beta1().ThirdPartyResources().Get(deployv1.ReleaseResourceName)
+	// if err != nil {
+	// 	if errors.IsNotFound(err) {
+	// 		fmt.Printf("NOT FOUND: releases TPR\n")
 
-			time.Sleep(10 * time.Second) // Wait until the TPR initialization is finished
-		} else {
-			panic(err)
-		}
-	} else {
-		fmt.Printf("SKIPPING: already exists %#v\n", tpr)
-	}
+	// 		tpr := &v1beta1.ThirdPartyResource{
+	// 			ObjectMeta: v1.ObjectMeta{
+	// 				Name: deployv1.ReleaseResourceName,
+	// 			},
+	// 			Versions: []v1beta1.APIVersion{
+	// 				{Name: deployv1.ReleaseResourceVersion},
+	// 			},
+	// 			Description: deployv1.ReleaseResourceDescription,
+	// 		}
 
-	tprclient, _, err := client.NewClient(config)
+	// 		result, err := clientset.ExtensionsV1beta1().ThirdPartyResources().Create(tpr)
+	// 		if err != nil {
+	// 			panic(err)
+	// 		}
+	// 		fmt.Printf("CREATED: %#v\nFROM: %#v\n", result, tpr)
 
-	if err != nil {
-		panic(err)
-	}
+	// 		time.Sleep(10 * time.Second) // Wait until the TPR initialization is finished
+	// 	} else {
+	// 		panic(err)
+	// 	}
+	// } else {
+	// 	fmt.Printf("SKIPPING: already exists %#v\n", tpr)
+	// }
 
-	var release deployv1.Release
+	// tprclient, _, err := client.NewClient(config)
 
-	err = tprclient.Get().
-		Resource(deployv1.ReleaseResourcePath).
-		Namespace(api.NamespaceDefault).
-		Name("release1").
-		Do().Into(&release)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	if err != nil {
-		if errors.IsNotFound(err) {
-			fmt.Printf("NOT FOUND: releases TPR instance\n")
+	// var release deployv1.Release
 
-			// Create an instance of our TPR
-			release := &deployv1.Release{
-				ObjectMeta: api.ObjectMeta{
-					Name: "release1",
-				},
-				Spec: deployv1.ReleaseSpec{
-					Replicas: 3,
-				},
-			}
+	// err = tprclient.Get().
+	// 	Resource(deployv1.ReleaseResourcePath).
+	// 	Namespace(api.NamespaceDefault).
+	// 	Name("release1").
+	// 	Do().Into(&release)
 
-			var result deployv1.Release
-			err = tprclient.Post().
-				Resource(deployv1.ReleaseResourcePath).
-				Namespace(api.NamespaceDefault).
-				Body(release).
-				Do().Into(&result)
+	// if err != nil {
+	// 	if errors.IsNotFound(err) {
+	// 		fmt.Printf("NOT FOUND: releases TPR instance\n")
 
-			if err != nil {
-				panic(err)
-			}
-			fmt.Printf("CREATED: %#v\n", result)
-		} else {
-			panic(err)
-		}
-	} else {
-		fmt.Printf("GET: %#v\n", release)
-	}
+	// 		// Create an instance of our TPR
+	// 		release := &deployv1.Release{
+	// 			ObjectMeta: api.ObjectMeta{
+	// 				Name: "release1",
+	// 			},
+	// 			Spec: deployv1.ReleaseSpec{
+	// 				Replicas: 3,
+	// 			},
+	// 		}
 
-	// Fetch a list of our TPRs
-	releaseList := deployv1.ReleaseList{}
-	err = tprclient.Get().Resource(deployv1.ReleaseResourcePath).Do().Into(&releaseList)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("LIST: %#v\n", releaseList)
+	// 		var result deployv1.Release
+	// 		err = tprclient.Post().
+	// 			Resource(deployv1.ReleaseResourcePath).
+	// 			Namespace(api.NamespaceDefault).
+	// 			Body(release).
+	// 			Do().Into(&result)
+
+	// 		if err != nil {
+	// 			panic(err)
+	// 		}
+	// 		fmt.Printf("CREATED: %#v\n", result)
+	// 	} else {
+	// 		panic(err)
+	// 	}
+	// } else {
+	// 	fmt.Printf("GET: %#v\n", release)
+	// }
+
+	// // Fetch a list of our TPRs
+	// releaseList := deployv1.ReleaseList{}
+	// err = tprclient.Get().Resource(deployv1.ReleaseResourcePath).Do().Into(&releaseList)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Printf("LIST: %#v\n", releaseList)
 }
 
 func configFromEnv(t *testing.T) *rest.Config {
