@@ -2,6 +2,7 @@ package client
 
 import (
 	deployv1 "github.com/nilebox/k8s-deploy/pkg/apis/v1"
+	"k8s.io/client-go/pkg/api"
 	"k8s.io/client-go/pkg/api/unversioned"
 	"k8s.io/client-go/pkg/runtime"
 	"k8s.io/client-go/pkg/runtime/serializer"
@@ -19,6 +20,7 @@ func NewClient(cfg *rest.Config) (*rest.RESTClient, *runtime.Scheme, error) {
 			groupVersion,
 			&deployv1.Release{},
 			&deployv1.ReleaseList{},
+			&api.ListOptions{},
 		)
 		return nil
 	})

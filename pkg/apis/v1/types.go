@@ -3,9 +3,9 @@ package v1
 import (
 	"encoding/json"
 
-	"k8s.io/client-go/pkg/api"
 	"k8s.io/client-go/pkg/api/meta"
 	"k8s.io/client-go/pkg/api/unversioned"
+	apiv1 "k8s.io/client-go/pkg/api/v1"
 	v1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
 )
@@ -27,7 +27,7 @@ type Release struct {
 	unversioned.TypeMeta `json:",inline"`
 	// Standard object metadata.
 	// +optional
-	api.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	apiv1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// Specification of the desired behavior of the Release.
 	// +optional
@@ -42,7 +42,7 @@ type ReleaseSpec struct {
 	// Number of desired pods. This is a pointer to distinguish between explicit
 	// zero and not specified. Defaults to 1.
 	// +optional
-	Replicas int32
+	Replicas *int32
 
 	// Label selector for pods. Existing ReplicaSets whose pods are
 	// selected by this will be the ones affected by this release.
@@ -50,7 +50,7 @@ type ReleaseSpec struct {
 	Selector *unversioned.LabelSelector
 
 	// Template describes the pods that will be created.
-	Template api.PodTemplateSpec
+	Template apiv1.PodTemplateSpec
 
 	// The release strategy to use to replace existing pods with new ones.
 	// +optional

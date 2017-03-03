@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log"
 
 	"github.com/nilebox/k8s-deploy/pkg/app"
 
@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	fmt.Println("hello world")
+	log.Println("hello world")
 }
 
 func runWithConfig(ctx context.Context, config *rest.Config) error {

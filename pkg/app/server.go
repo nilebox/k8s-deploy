@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 
 	deployv1 "github.com/nilebox/k8s-deploy/pkg/apis/v1"
@@ -26,7 +25,7 @@ type Server struct {
 }
 
 func (s *Server) Run(ctx context.Context) error {
-	fmt.Printf("Run()\n")
+	log.Printf("Run()\n")
 
 	log.Printf("Initializing REST client")
 	clientset, err := kubernetes.NewForConfig(s.RestConfig)
@@ -51,7 +50,8 @@ func (s *Server) Run(ctx context.Context) error {
 
 	log.Printf("Watch Release objects")
 	// Watch Release objects
-	releaseInformer, err := watchReleases(ctx, releaseClient, releaseScheme)
+	handler := release.NewHandler(clientset)
+	releaseInformer, err := watchReleases(ctx, releaseClient, releaseScheme, handler)
 	if err != nil {
 		log.Printf("Failed to register watch for Release resource: %v", err)
 		return err
@@ -73,7 +73,7 @@ func ensureReleaseResourceExists(clientset kubernetes.Interface) error {
 	tpr, err := clientset.ExtensionsV1beta1().ThirdPartyResources().Get(deployv1.ReleaseResourceName)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			fmt.Printf("NOT FOUND: releases TPR\n")
+			log.Printf("NOT FOUND: releases TPR\n")
 
 			tpr := &v1beta1.ThirdPartyResource{
 				ObjectMeta: apiv1.ObjectMeta{
@@ -89,17 +89,17 @@ func ensureReleaseResourceExists(clientset kubernetes.Interface) error {
 			if err != nil {
 				return err
 			}
-			fmt.Printf("CREATED: %#v\nFROM: %#v\n", result, tpr)
+			log.Printf("CREATED: %#v\nFROM: %#v\n", result, tpr)
 		} else {
 			return err
 		}
 	} else {
-		fmt.Printf("SKIPPING: already exists %#v\n", tpr)
+		log.Printf("SKIPPING: already exists %#v\n", tpr)
 	}
 	return nil
 }
 
-func watchReleases(ctx context.Context, releaseClient cache.Getter, releaseScheme *runtime.Scheme) (cache.SharedInformer, error) {
+func watchReleases(ctx context.Context, releaseClient cache.Getter, releaseScheme *runtime.Scheme, handler *release.ReleaseEventHandler) (cache.SharedInformer, error) {
 	parameterCodec := runtime.NewParameterCodec(releaseScheme)
 
 	// Cannot use cache.NewListWatchFromClient() because it uses global api.ParameterCodec which uses global
@@ -122,7 +122,6 @@ func watchReleases(ctx context.Context, releaseClient cache.Getter, releaseSchem
 		},
 	}, &deployv1.Release{}, 0)
 
-	handler := &release.ReleaseEventHandler{}
 	if err := releaseInformer.AddEventHandler(handler); err != nil {
 		return nil, err
 	}
