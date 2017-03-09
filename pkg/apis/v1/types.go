@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"log"
 
-	"k8s.io/client-go/pkg/api/meta"
-	"k8s.io/client-go/pkg/api/unversioned"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	apiv1 "k8s.io/client-go/pkg/api/v1"
 	v1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
-	"k8s.io/client-go/pkg/util/intstr"
 )
 
 const (
@@ -25,7 +25,7 @@ const (
 
 // Release enables declarative updates for Pods and ReplicaSets.
 type Release struct {
-	unversioned.TypeMeta `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
 	// Standard object metadata.
 	// +optional
 	apiv1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
@@ -48,7 +48,7 @@ type ReleaseSpec struct {
 	// Label selector for pods. Existing ReplicaSets whose pods are
 	// selected by this will be the ones affected by this release.
 	// +optional
-	Selector *unversioned.LabelSelector
+	Selector *metav1.LabelSelector
 
 	// Template describes the pods that will be created.
 	Template apiv1.PodTemplateSpec
@@ -148,32 +148,32 @@ type RollbackConfig struct {
 
 // ReleaseList is a list of Releases.
 type ReleaseList struct {
-	unversioned.TypeMeta `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
 	// Standard list metadata.
 	// +optional
-	unversioned.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// Items is the list of Releases.
 	Items []Release `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
 // Required to satisfy Object interface
-func (e *Release) GetObjectKind() unversioned.ObjectKind {
+func (e *Release) GetObjectKind() schema.ObjectKind {
 	return &e.TypeMeta
 }
 
 // Required to satisfy ObjectMetaAccessor interface
-func (e *Release) GetObjectMeta() meta.Object {
+func (e *Release) GetObjectMeta() metav1.Object {
 	return &e.ObjectMeta
 }
 
 // Required to satisfy Object interface
-func (el *ReleaseList) GetObjectKind() unversioned.ObjectKind {
+func (el *ReleaseList) GetObjectKind() schema.ObjectKind {
 	return &el.TypeMeta
 }
 
 // Required to satisfy ListMetaAccessor interface
-func (el *ReleaseList) GetListMeta() unversioned.List {
+func (el *ReleaseList) GetListMeta() metav1.List {
 	return &el.ListMeta
 }
 

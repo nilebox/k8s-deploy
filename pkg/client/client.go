@@ -2,15 +2,16 @@ package client
 
 import (
 	deployv1 "github.com/nilebox/k8s-deploy/pkg/apis/v1"
-	"k8s.io/client-go/pkg/api"
-	"k8s.io/client-go/pkg/api/unversioned"
-	"k8s.io/client-go/pkg/runtime"
-	"k8s.io/client-go/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/rest"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func NewClient(cfg *rest.Config) (*rest.RESTClient, *runtime.Scheme, error) {
-	groupVersion := unversioned.GroupVersion{
+	groupVersion := schema.GroupVersion{
 		Group:   deployv1.ReleaseResourceGroup,
 		Version: deployv1.ReleaseResourceVersion,
 	}
@@ -20,7 +21,8 @@ func NewClient(cfg *rest.Config) (*rest.RESTClient, *runtime.Scheme, error) {
 			groupVersion,
 			&deployv1.Release{},
 			&deployv1.ReleaseList{},
-			&api.ListOptions{},
+			&metav1.ListOptions{},
+			&metav1.DeleteOptions{},
 		)
 		return nil
 	})

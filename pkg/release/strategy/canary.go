@@ -4,9 +4,9 @@ import (
 	"log"
 
 	deployv1 "github.com/nilebox/k8s-deploy/pkg/apis/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	apierrors "k8s.io/client-go/pkg/api/errors"
-	"k8s.io/client-go/pkg/api/unversioned"
 	apiv1 "k8s.io/client-go/pkg/api/v1"
 	v1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 )
@@ -22,7 +22,7 @@ func (c *Canary) Run(release *deployv1.Release) error {
 
 	// First ensure that canary deployment object exists
 	canaryDeployment := &v1beta1.Deployment{
-		ObjectMeta: apiv1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Namespace: release.ObjectMeta.Namespace,
 			Name:      release.ObjectMeta.Name + "-canary",
 		},
@@ -41,7 +41,7 @@ func (c *Canary) Run(release *deployv1.Release) error {
 
 	// Check if stable deployment object exists too
 	stableDeployment := &v1beta1.Deployment{
-		ObjectMeta: apiv1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Namespace: release.ObjectMeta.Namespace,
 			Name:      release.ObjectMeta.Name + "-stable",
 		},
@@ -60,15 +60,15 @@ func (c *Canary) Run(release *deployv1.Release) error {
 	return err
 }
 
-func (c *Canary) selectorWithLabel(selector *unversioned.LabelSelector, labelName string, labelValue string) *unversioned.LabelSelector {
-	return &unversioned.LabelSelector{
+func (c *Canary) selectorWithLabel(selector *metav1.LabelSelector, labelName string, labelValue string) *metav1.LabelSelector {
+	return &metav1.LabelSelector{
 		MatchLabels: c.copyMapWithLabel(selector.MatchLabels, labelName, labelValue),
 	}
 }
 
 func (c *Canary) podTemplateWithLabel(template apiv1.PodTemplateSpec, labelName string, labelValue string) apiv1.PodTemplateSpec {
 	return apiv1.PodTemplateSpec{
-		ObjectMeta: apiv1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Labels: c.copyMapWithLabel(template.ObjectMeta.Labels, labelName, labelValue),
 		},
 		Spec: template.Spec,
@@ -87,7 +87,7 @@ func (c *Canary) copyMapWithLabel(originalMap map[string]string, labelName strin
 func (c *Canary) ensureDeploymentExists(deployment *v1beta1.Deployment) error {
 	// initialize third party resource if it does not exist
 	deployments := c.Clientset.ExtensionsV1beta1().Deployments(deployment.ObjectMeta.Namespace)
-	existing, err := deployments.Get(deployment.ObjectMeta.Name)
+	existing, err := deployments.Get(deployment.ObjectMeta.Name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			log.Printf("NOT FOUND: deployment %s", deployment.ObjectMeta.Name)

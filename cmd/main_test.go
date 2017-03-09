@@ -12,9 +12,9 @@ import (
 	"time"
 
 	deployv1 "github.com/nilebox/k8s-deploy/pkg/apis/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/pkg/api"
-	"k8s.io/client-go/pkg/api/errors"
-	"k8s.io/client-go/pkg/api/unversioned"
 	apiv1 "k8s.io/client-go/pkg/api/v1"
 )
 
@@ -57,7 +57,7 @@ func TestCanaryRelease(t *testing.T) {
 			replicas := int32(3)
 			// Create an instance of our TPR
 			release := &deployv1.Release{
-				TypeMeta: unversioned.TypeMeta{
+				TypeMeta: metav1.TypeMeta{
 					APIVersion: deployv1.ReleaseResourceGroupVersion,
 					Kind:       deployv1.ReleaseResourceKind,
 				},
@@ -66,7 +66,7 @@ func TestCanaryRelease(t *testing.T) {
 				},
 				Spec: deployv1.ReleaseSpec{
 					Replicas: &replicas,
-					Selector: &unversioned.LabelSelector{
+					Selector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{
 							"app":     "k8s-deploy-test",
 							"version": "1.0",

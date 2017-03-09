@@ -4,20 +4,19 @@ import (
 	"context"
 	"errors"
 	"log"
-	"time"
 
 	deployv1 "github.com/nilebox/k8s-deploy/pkg/apis/v1"
 	"github.com/nilebox/k8s-deploy/pkg/client"
 	"github.com/nilebox/k8s-deploy/pkg/release"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	fields "k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api"
-	apierrors "k8s.io/client-go/pkg/api/errors"
-	apiv1 "k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
-	fields "k8s.io/client-go/pkg/fields"
-	"k8s.io/client-go/pkg/runtime"
-	"k8s.io/client-go/pkg/watch"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 )
@@ -72,13 +71,13 @@ func (s *Server) Run(ctx context.Context) error {
 
 func ensureReleaseResourceExists(clientset kubernetes.Interface) error {
 	// initialize third party resource if it does not exist
-	tpr, err := clientset.ExtensionsV1beta1().ThirdPartyResources().Get(deployv1.ReleaseResourceName)
+	tpr, err := clientset.ExtensionsV1beta1().ThirdPartyResources().Get(deployv1.ReleaseResourceName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			log.Printf("NOT FOUND: releases TPR\n")
 
 			tpr := &v1beta1.ThirdPartyResource{
-				ObjectMeta: apiv1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name: deployv1.ReleaseResourceName,
 				},
 				Versions: []v1beta1.APIVersion{
@@ -101,7 +100,7 @@ func ensureReleaseResourceExists(clientset kubernetes.Interface) error {
 	return nil
 }
 
-func watchReleases(ctx context.Context, releaseClient cache.Getter, releaseScheme *runtime.Scheme, handler *release.ReleaseEventHandler) (*cache.Controller, error) {
+func watchReleases(ctx context.Context, releaseClient cache.Getter, releaseScheme *runtime.Scheme, handler *release.ReleaseEventHandler) (cache.Controller, error) {
 	parameterCodec := runtime.NewParameterCodec(releaseScheme)
 
 	// // Cannot use cache.NewListWatchFromClient() because it uses global api.ParameterCodec which uses global
@@ -132,13 +131,11 @@ func watchReleases(ctx context.Context, releaseClient cache.Getter, releaseSchem
 
 	// return releaseInformer, nil
 
-	var s fields.Selector
-	s = fields.Everything()
 	source := newListWatchFromClient(
 		releaseClient,
 		deployv1.ReleaseResourcePath,
 		api.NamespaceAll,
-		s,
+		fields.Everything(),
 		parameterCodec)
 
 	store, controller := cache.NewInformer(
@@ -150,7 +147,8 @@ func watchReleases(ctx context.Context, releaseClient cache.Getter, releaseSchem
 		// resyncPeriod
 		// Every resyncPeriod, all resources in the cache will retrigger events.
 		// Set to 0 to disable the resync.
-		time.Second*10,
+		//time.Second*10,
+		0,
 
 		// Your custom resource event handlers.
 		handler)
@@ -172,7 +170,7 @@ func watchReleases(ctx context.Context, releaseClient cache.Getter, releaseSchem
 
 // newListWatchFromClient is a copy of cache.NewListWatchFromClient() method with custom codec
 func newListWatchFromClient(c cache.Getter, resource string, namespace string, fieldSelector fields.Selector, paramCodec runtime.ParameterCodec) *cache.ListWatch {
-	listFunc := func(options api.ListOptions) (runtime.Object, error) {
+	listFunc := func(options metav1.ListOptions) (runtime.Object, error) {
 		return c.Get().
 			Namespace(namespace).
 			Resource(resource).
@@ -181,7 +179,7 @@ func newListWatchFromClient(c cache.Getter, resource string, namespace string, f
 			Do().
 			Get()
 	}
-	watchFunc := func(options api.ListOptions) (watch.Interface, error) {
+	watchFunc := func(options metav1.ListOptions) (watch.Interface, error) {
 		return c.Get().
 			Prefix("watch").
 			Namespace(namespace).
