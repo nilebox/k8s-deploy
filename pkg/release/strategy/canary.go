@@ -2,6 +2,7 @@ package strategy
 
 import (
 	"log"
+	"time"
 
 	deployv1 "github.com/nilebox/k8s-deploy/pkg/apis/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,9 +17,9 @@ type Canary struct {
 }
 
 func (c *Canary) Run(release *deployv1.Release) error {
-	modeLabel := "mode"
-	canaryMode := "canary"
-	stableMode := "stable"
+	trackLabel := "track"
+	canaryTrack := "canary"
+	stableTrack := "stable"
 
 	// First ensure that canary deployment object exists
 	canaryDeployment := &v1beta1.Deployment{
@@ -28,8 +29,8 @@ func (c *Canary) Run(release *deployv1.Release) error {
 		},
 		Spec: v1beta1.DeploymentSpec{
 			Replicas: release.Spec.Replicas,
-			Selector: c.selectorWithLabel(release.Spec.Selector, modeLabel, canaryMode),
-			Template: c.podTemplateWithLabel(release.Spec.Template, modeLabel, canaryMode),
+			Selector: c.selectorWithLabel(release.Spec.Selector, trackLabel, canaryTrack),
+			Template: c.podTemplateWithLabel(release.Spec.Template, trackLabel, canaryTrack),
 		},
 	}
 	err := c.ensureDeploymentExists(canaryDeployment)
@@ -37,7 +38,10 @@ func (c *Canary) Run(release *deployv1.Release) error {
 		log.Printf("Failed to create/update canary deployment: %v", err)
 		return err
 	}
+
 	// TODO: healthchecks
+	log.Printf("Emulate waiting for health check")
+	time.Sleep(15 * time.Second) // Wait until the app starts and creates the Release TPR
 
 	// Check if stable deployment object exists too
 	stableDeployment := &v1beta1.Deployment{
@@ -47,8 +51,8 @@ func (c *Canary) Run(release *deployv1.Release) error {
 		},
 		Spec: v1beta1.DeploymentSpec{
 			Replicas: release.Spec.Replicas,
-			Selector: c.selectorWithLabel(release.Spec.Selector, modeLabel, stableMode),
-			Template: c.podTemplateWithLabel(release.Spec.Template, modeLabel, stableMode),
+			Selector: c.selectorWithLabel(release.Spec.Selector, trackLabel, stableTrack),
+			Template: c.podTemplateWithLabel(release.Spec.Template, trackLabel, stableTrack),
 		},
 	}
 	err = c.ensureDeploymentExists(stableDeployment)

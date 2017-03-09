@@ -217,3 +217,11 @@ func (el *ReleaseList) UnmarshalJSON(data []byte) error {
 	*el = tmp2
 	return nil
 }
+
+func (e *Release) UnmarshalText(data []byte) error {
+	return json.Unmarshal(data, e)
+}
+
+func (el *ReleaseList) UnmarshalText(data []byte) error {
+	return json.Unmarshal(data, el)
+}

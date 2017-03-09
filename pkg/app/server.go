@@ -59,7 +59,7 @@ func (s *Server) Run(ctx context.Context) error {
 	}
 
 	log.Printf("WaitForCacheSync")
-	// We must wait for tmplInf to populate its cache to avoid reading from an empty cache
+	// We must wait for releaseInformer to populate its cache to avoid reading from an empty cache
 	// in case of resource-generated evxents.
 	if !cache.WaitForCacheSync(ctx.Done(), releaseInformer.HasSynced) {
 		return errors.New("wait for Release Informer was cancelled")
@@ -103,34 +103,6 @@ func ensureReleaseResourceExists(clientset kubernetes.Interface) error {
 func watchReleases(ctx context.Context, releaseClient cache.Getter, releaseScheme *runtime.Scheme, handler *release.ReleaseEventHandler) (cache.Controller, error) {
 	parameterCodec := runtime.NewParameterCodec(releaseScheme)
 
-	// // Cannot use cache.NewListWatchFromClient() because it uses global api.ParameterCodec which uses global
-	// // api.Scheme which does not know about Release group/version.
-	// // cache.NewListWatchFromClient(releaseClient, deployv1.ReleaseResourcePath, apiv1.NamespaceAll, fields.Everything())
-	// releaseInformer := cache.NewSharedInformer(&cache.ListWatch{
-	// 	ListFunc: func(options api.ListOptions) (runtime.Object, error) {
-	// 		return releaseClient.Get().
-	// 			Resource(deployv1.ReleaseResourcePath).
-	// 			VersionedParams(&options, parameterCodec).
-	// 			Do().
-	// 			Get()
-	// 	},
-	// 	WatchFunc: func(options api.ListOptions) (watch.Interface, error) {
-	// 		return releaseClient.Get().
-	// 			Prefix("watch").
-	// 			Resource(deployv1.ReleaseResourcePath).
-	// 			VersionedParams(&options, parameterCodec).
-	// 			Watch()
-	// 	},
-	// }, &deployv1.Release{}, 0)
-
-	// if err := releaseInformer.AddEventHandler(handler); err != nil {
-	// 	return nil, err
-	// }
-
-	// go releaseInformer.Run(ctx.Done())
-
-	// return releaseInformer, nil
-
 	source := newListWatchFromClient(
 		releaseClient,
 		deployv1.ReleaseResourcePath,
@@ -169,6 +141,9 @@ func watchReleases(ctx context.Context, releaseClient cache.Getter, releaseSchem
 }
 
 // newListWatchFromClient is a copy of cache.NewListWatchFromClient() method with custom codec
+// Cannot use cache.NewListWatchFromClient() because it uses global api.ParameterCodec which uses global
+// api.Scheme which does not know about custom types (Release in our case) group/version.
+// cache.NewListWatchFromClient(releaseClient, deployv1.ReleaseResourcePath, apiv1.NamespaceAll, fields.Everything())
 func newListWatchFromClient(c cache.Getter, resource string, namespace string, fieldSelector fields.Selector, paramCodec runtime.ParameterCodec) *cache.ListWatch {
 	listFunc := func(options metav1.ListOptions) (runtime.Object, error) {
 		return c.Get().
