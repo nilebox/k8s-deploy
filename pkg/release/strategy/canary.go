@@ -87,7 +87,7 @@ func (c *Canary) copyMapWithLabel(originalMap map[string]string, labelName strin
 func (c *Canary) ensureDeploymentExists(deployment *v1beta1.Deployment) error {
 	// initialize third party resource if it does not exist
 	deployments := c.Clientset.ExtensionsV1beta1().Deployments(deployment.ObjectMeta.Namespace)
-	tpr, err := deployments.Get(deployment.ObjectMeta.Name)
+	existing, err := deployments.Get(deployment.ObjectMeta.Name)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			log.Printf("NOT FOUND: deployment %s", deployment.ObjectMeta.Name)
@@ -95,13 +95,13 @@ func (c *Canary) ensureDeploymentExists(deployment *v1beta1.Deployment) error {
 			if err != nil {
 				return err
 			}
-			log.Printf("CREATED: %#v\nFROM: %#v\n", result, tpr)
+			log.Printf("CREATED: %s", result.ObjectMeta.SelfLink)
 		} else {
 			return err
 		}
 	} else {
 		// TODO update existing deployment object
-		log.Printf("SKIPPING: already exists %#v\n", tpr)
+		log.Printf("SKIPPING: already exists %s", existing.ObjectMeta.SelfLink)
 	}
 	return nil
 }

@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"log"
 
 	"k8s.io/client-go/pkg/api/meta"
 	"k8s.io/client-go/pkg/api/unversioned"
@@ -187,8 +188,10 @@ func (e *Release) UnmarshalJSON(data []byte) error {
 	tmp := ReleaseCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
+		log.Printf("UnmarshalJSON Error")
 		return err
 	}
+	log.Printf("UnmarshalJSON: %s", tmp.ObjectMeta.SelfLink)
 	tmp2 := Release(tmp)
 	*e = tmp2
 	return nil
@@ -198,8 +201,10 @@ func (el *ReleaseList) UnmarshalJSON(data []byte) error {
 	tmp := ReleaseListCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
+		log.Printf("UnmarshalJSON Error")
 		return err
 	}
+	log.Printf("UnmarshalJSON: %s", tmp.ListMeta.SelfLink)
 	tmp2 := ReleaseList(tmp)
 	*el = tmp2
 	return nil

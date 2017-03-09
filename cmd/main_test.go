@@ -5,8 +5,6 @@ package main
 import (
 	"context"
 	"log"
-	"net"
-	"os"
 	"testing"
 
 	"github.com/nilebox/k8s-deploy/pkg/client"
@@ -18,12 +16,11 @@ import (
 	"k8s.io/client-go/pkg/api/errors"
 	"k8s.io/client-go/pkg/api/unversioned"
 	apiv1 "k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/rest"
 )
 
 func TestCanaryRelease(t *testing.T) {
 	log.Printf("Start\n")
-	config := configFromEnv(t)
+	config := configFromEnv()
 
 	log.Printf("Setup context\n")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -124,19 +121,4 @@ func TestCanaryRelease(t *testing.T) {
 	// 	panic(err)
 	// }
 	// log.Printf("LIST: %#v\n", releaseList)
-}
-
-func configFromEnv(t *testing.T) *rest.Config {
-	host, port := os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT")
-	if len(host) == 0 || len(port) == 0 {
-		t.Fatal("Unable to load cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT must be defined")
-	}
-	return &rest.Config{
-		Host: "https://" + net.JoinHostPort(host, port),
-		TLSClientConfig: rest.TLSClientConfig{
-			CAFile:   os.Getenv("KUBERNETES_CA_PATH"),
-			CertFile: os.Getenv("KUBERNETES_CLIENT_CERT"),
-			KeyFile:  os.Getenv("KUBERNETES_CLIENT_KEY"),
-		},
-	}
 }

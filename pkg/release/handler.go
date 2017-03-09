@@ -23,8 +23,9 @@ func NewHandler(clientset kubernetes.Interface) *ReleaseEventHandler {
 }
 
 func (h *ReleaseEventHandler) OnAdd(obj interface{}) {
-	log.Printf("[REH] OnAdd %#v", obj)
 	release := obj.(*deployv1.Release)
+	log.Printf("[REH] OnAdd %s", release.ObjectMeta.SelfLink)
+
 	if release.TypeMeta.Kind == "" {
 		log.Printf("ERROR Unknown release, skipping")
 		return
@@ -33,11 +34,15 @@ func (h *ReleaseEventHandler) OnAdd(obj interface{}) {
 }
 
 func (h *ReleaseEventHandler) OnUpdate(oldObj, newObj interface{}) {
-	log.Printf("[REH] OnUpdate %#v", newObj)
+	oldRelease := oldObj.(*deployv1.Release)
+	newRelease := newObj.(*deployv1.Release)
+	log.Printf("[REH] OnUpdate oldObj: %s", oldRelease.ObjectMeta.SelfLink)
+	log.Printf("[REH] OnUpdate newObj: %s", newRelease.ObjectMeta.SelfLink)
 }
 
 func (h *ReleaseEventHandler) OnDelete(obj interface{}) {
-	log.Printf("[REH] OnDelete %#v", obj)
+	release := obj.(*deployv1.Release)
+	log.Printf("[REH] OnDelete %s", release.ObjectMeta.SelfLink)
 }
 
 func (h *ReleaseEventHandler) handle(release *deployv1.Release) {

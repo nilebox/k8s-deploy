@@ -1,0 +1,22 @@
+apiVersion: deploy.k8s/v1
+kind: Release
+description: "Sample release"
+metadata:
+  name: release-example-1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: k8s-deploy-test
+      version: "1.0"
+  template:
+    metadata:
+      labels:
+        app: k8s-deploy-test
+        version: "1.0"
+    spec:
+      containers:
+      - name: tea
+        image: nginxdemos/hello
+        ports:
+        - containerPort: 80
