@@ -219,9 +219,11 @@ func (el *ReleaseList) UnmarshalJSON(data []byte) error {
 }
 
 func (e *Release) UnmarshalText(data []byte) error {
+	log.Printf("UnmarshalText")
 	return json.Unmarshal(data, e)
 }
 
 func (el *ReleaseList) UnmarshalText(data []byte) error {
+	log.Printf("UnmarshalText")
 	return json.Unmarshal(data, el)
 }

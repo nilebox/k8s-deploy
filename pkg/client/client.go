@@ -23,6 +23,7 @@ func NewClient(cfg *rest.Config) (*rest.RESTClient, *runtime.Scheme, error) {
 			&deployv1.ReleaseList{},
 			&metav1.ListOptions{},
 			&metav1.DeleteOptions{},
+			&metav1.Status{},
 		)
 		return nil
 	})
