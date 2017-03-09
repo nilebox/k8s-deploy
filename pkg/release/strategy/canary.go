@@ -23,8 +23,8 @@ func (c *Canary) Run(release *deployv1.Release) error {
 	// First ensure that canary deployment object exists
 	canaryDeployment := &v1beta1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: release.ObjectMeta.Namespace,
-			Name:      release.ObjectMeta.Name + "-canary",
+			Namespace: release.Metadata.Namespace,
+			Name:      release.Metadata.Name + "-canary",
 		},
 		Spec: v1beta1.DeploymentSpec{
 			Replicas: release.Spec.Replicas,
@@ -42,8 +42,8 @@ func (c *Canary) Run(release *deployv1.Release) error {
 	// Check if stable deployment object exists too
 	stableDeployment := &v1beta1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: release.ObjectMeta.Namespace,
-			Name:      release.ObjectMeta.Name + "-stable",
+			Namespace: release.Metadata.Namespace,
+			Name:      release.Metadata.Name + "-stable",
 		},
 		Spec: v1beta1.DeploymentSpec{
 			Replicas: release.Spec.Replicas,

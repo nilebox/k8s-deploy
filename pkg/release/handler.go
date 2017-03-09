@@ -24,7 +24,7 @@ func NewHandler(clientset kubernetes.Interface) *ReleaseEventHandler {
 
 func (h *ReleaseEventHandler) OnAdd(obj interface{}) {
 	release := obj.(*deployv1.Release)
-	log.Printf("[REH] OnAdd %s", release.ObjectMeta.SelfLink)
+	log.Printf("[REH] OnAdd %s", release.Metadata.SelfLink)
 
 	if release.TypeMeta.Kind == "" {
 		log.Printf("ERROR Unknown release, skipping")
@@ -36,17 +36,17 @@ func (h *ReleaseEventHandler) OnAdd(obj interface{}) {
 func (h *ReleaseEventHandler) OnUpdate(oldObj, newObj interface{}) {
 	oldRelease := oldObj.(*deployv1.Release)
 	newRelease := newObj.(*deployv1.Release)
-	log.Printf("[REH] OnUpdate oldObj: %s", oldRelease.ObjectMeta.SelfLink)
-	log.Printf("[REH] OnUpdate newObj: %s", newRelease.ObjectMeta.SelfLink)
+	log.Printf("[REH] OnUpdate oldObj: %s", oldRelease.Metadata.SelfLink)
+	log.Printf("[REH] OnUpdate newObj: %s", newRelease.Metadata.SelfLink)
 }
 
 func (h *ReleaseEventHandler) OnDelete(obj interface{}) {
 	release := obj.(*deployv1.Release)
-	log.Printf("[REH] OnDelete %s", release.ObjectMeta.SelfLink)
+	log.Printf("[REH] OnDelete %s", release.Metadata.SelfLink)
 }
 
 func (h *ReleaseEventHandler) handle(release *deployv1.Release) {
-	log.Printf("Processing new release %s", release.ObjectMeta.Name)
+	log.Printf("Processing new release %s", release.Metadata.Name)
 	switch release.Spec.Strategy.Type {
 	case "Canary":
 		log.Printf("Starting Canary deployment")

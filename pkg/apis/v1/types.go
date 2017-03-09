@@ -26,9 +26,13 @@ const (
 // Release enables declarative updates for Pods and ReplicaSets.
 type Release struct {
 	metav1.TypeMeta `json:",inline"`
+
+	// *** SECRET KNOWLEDGE ***: Don't call the field below ObjectMeta, it will blow up the JSON deserialization
+	// Issue: https://github.com/kubernetes/client-go/issues/8
+
 	// Standard object metadata.
 	// +optional
-	apiv1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	Metadata apiv1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// Specification of the desired behavior of the Release.
 	// +optional
@@ -164,7 +168,7 @@ func (e *Release) GetObjectKind() schema.ObjectKind {
 
 // Required to satisfy ObjectMetaAccessor interface
 func (e *Release) GetObjectMeta() metav1.Object {
-	return &e.ObjectMeta
+	return &e.Metadata
 }
 
 // Required to satisfy Object interface
@@ -191,7 +195,7 @@ func (e *Release) UnmarshalJSON(data []byte) error {
 		log.Printf("UnmarshalJSON Error")
 		return err
 	}
-	log.Printf("UnmarshalJSON: %s", tmp.ObjectMeta.SelfLink)
+	log.Printf("UnmarshalJSON: %s", tmp.Metadata.SelfLink)
 	tmp2 := Release(tmp)
 	*e = tmp2
 	return nil

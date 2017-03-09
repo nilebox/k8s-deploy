@@ -61,7 +61,7 @@ func TestCanaryRelease(t *testing.T) {
 					APIVersion: deployv1.ReleaseResourceGroupVersion,
 					Kind:       deployv1.ReleaseResourceKind,
 				},
-				ObjectMeta: apiv1.ObjectMeta{
+				Metadata: apiv1.ObjectMeta{
 					Name: "release2",
 				},
 				Spec: deployv1.ReleaseSpec{
