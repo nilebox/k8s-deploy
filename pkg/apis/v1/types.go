@@ -153,9 +153,13 @@ type RollbackConfig struct {
 // ReleaseList is a list of Releases.
 type ReleaseList struct {
 	metav1.TypeMeta `json:",inline"`
+
+	// *** SECRET KNOWLEDGE ***: Don't call the field below ListMeta, it will blow up the JSON deserialization
+	// Issue: https://github.com/kubernetes/client-go/issues/8
+
 	// Standard list metadata.
 	// +optional
-	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	Metadata metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// Items is the list of Releases.
 	Items []Release `json:"items" protobuf:"bytes,2,rep,name=items"`
@@ -178,7 +182,7 @@ func (el *ReleaseList) GetObjectKind() schema.ObjectKind {
 
 // Required to satisfy ListMetaAccessor interface
 func (el *ReleaseList) GetListMeta() metav1.List {
-	return &el.ListMeta
+	return &el.Metadata
 }
 
 // The code below is used only to work around a known problem with third-party
@@ -208,7 +212,7 @@ func (el *ReleaseList) UnmarshalJSON(data []byte) error {
 		log.Printf("UnmarshalJSON Error")
 		return err
 	}
-	log.Printf("UnmarshalJSON: %s", tmp.ListMeta.SelfLink)
+	log.Printf("UnmarshalJSON: %s", tmp.Metadata.SelfLink)
 	tmp2 := ReleaseList(tmp)
 	*el = tmp2
 	return nil

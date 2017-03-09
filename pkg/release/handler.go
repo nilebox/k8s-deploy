@@ -26,8 +26,8 @@ func (h *ReleaseEventHandler) OnAdd(obj interface{}) {
 	release := obj.(*deployv1.Release)
 	log.Printf("[REH] OnAdd %s", release.Metadata.SelfLink)
 
-	if release.TypeMeta.Kind == "" {
-		log.Printf("ERROR Unknown release, skipping")
+	if release.Metadata.Name == "" {
+		log.Printf("ERROR Release name is empty!")
 		return
 	}
 	h.handle(release)
