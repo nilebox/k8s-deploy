@@ -50,7 +50,7 @@ minikube-run:
 	KUBERNETES_CA_PATH="$$HOME/.minikube/ca.crt" \
 	KUBERNETES_CLIENT_CERT="$$HOME/.minikube/apiserver.crt" \
 	KUBERNETES_CLIENT_KEY="$$HOME/.minikube/apiserver.key" \
-	go run cmd/main.go -race -v $$(glide nv)
+	go run -race cmd/main.go
 
 test-race:
 	go test -race $$(glide nv)

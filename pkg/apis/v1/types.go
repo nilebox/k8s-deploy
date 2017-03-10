@@ -39,12 +39,12 @@ type Release struct {
 
 	// Most recently observed status of the Release.
 	// +optional
-	Status ReleaseStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+	Status ReleaseStatus `json:"status,omitempty"`
 }
 
 type ReleaseStatus struct {
 	// State is the current state of the Release
-	State ReleaseState
+	State ReleaseState `json:"state,omitempty"`
 }
 
 type ReleaseState string
