@@ -8,7 +8,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	apiv1 "k8s.io/client-go/pkg/api/v1"
-	v1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 )
 
 const (
@@ -40,8 +39,21 @@ type Release struct {
 
 	// Most recently observed status of the Release.
 	// +optional
-	Status v1beta1.DeploymentStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+	Status ReleaseStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
 }
+
+type ReleaseStatus struct {
+	// State is the current state of the Release
+	State ReleaseState
+}
+
+type ReleaseState string
+
+// These are valid release state
+const (
+	ReleaseStateReady   ReleaseState = "Ready"
+	ReleaseStateFailure ReleaseState = "Failure"
+)
 
 type ReleaseSpec struct {
 	// Number of desired pods. This is a pointer to distinguish between explicit

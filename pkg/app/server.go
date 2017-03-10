@@ -51,7 +51,7 @@ func (s *Server) Run(ctx context.Context) error {
 
 	log.Printf("Watch Release objects")
 	// Watch Release objects
-	handler := release.NewHandler(clientset)
+	handler := release.NewHandler(releaseClient, clientset)
 	releaseInformer, err := watchReleases(ctx, releaseClient, releaseScheme, handler)
 	if err != nil {
 		log.Printf("Failed to register watch for Release resource: %v", err)
@@ -79,6 +79,11 @@ func ensureReleaseResourceExists(clientset kubernetes.Interface) error {
 			tpr := &v1beta1.ThirdPartyResource{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: deployv1.ReleaseResourceName,
+					// This is for Smith support https://github.com/atlassian/smith/blob/master/docs/design/managing-resources.md
+					Annotations: map[string]string{
+						"smith.atlassian.com/TprReadyWhenFieldPath":  "status.state",
+						"smith.atlassian.com/TprReadyWhenFieldValue": "Ready",
+					},
 				},
 				Versions: []v1beta1.APIVersion{
 					{Name: deployv1.ReleaseResourceVersion},
