@@ -1,16 +1,18 @@
 apiVersion: smith.atlassian.com/v1
 kind: Bundle
 metadata:
-  name: release-smith-bundle-x
+  name: release-graph
 spec:
   resources:
-  - Name: release-x-controlled-by-smith
+  - name: release-v-1
+    dependsOn:
+      - release-v-3
     spec:
       apiVersion: deploy.k8s/v1
       kind: Release
       description: "Sample release controlled by Smith"
       metadata:
-        name: release-smith-example-x
+        name: release-v-1
       spec:
         replicas: 3
         selector:
@@ -28,3 +30,103 @@ spec:
               image: nginxdemos/hello
               ports:
               - containerPort: 80
+  - name: release-v-2
+    spec:
+      apiVersion: deploy.k8s/v1
+      kind: Release
+      description: "Sample release controlled by Smith"
+      metadata:
+        name: release-v-2
+      spec:
+        replicas: 3
+        selector:
+          matchLabels:
+            app: k8s-deploy-test
+            version: "1.0"
+        template:
+          metadata:
+            labels:
+              app: k8s-deploy-test
+              version: "1.0"
+          spec:
+            containers:
+            - name: tea
+              image: nginxdemos/hello
+              ports:
+              - containerPort: 80
+  - name: release-v-3
+    dependsOn:
+      - release-v-2
+    spec:
+      apiVersion: deploy.k8s/v1
+      kind: Release
+      description: "Sample release controlled by Smith"
+      metadata:
+        name: release-v-3
+      spec:
+        replicas: 3
+        selector:
+          matchLabels:
+            app: k8s-deploy-test
+            version: "1.0"
+        template:
+          metadata:
+            labels:
+              app: k8s-deploy-test
+              version: "1.0"
+          spec:
+            containers:
+            - name: tea
+              image: nginxdemos/hello
+              ports:
+              - containerPort: 80
+  - name: release-v-4
+    dependsOn:
+      - release-v-5
+    spec:
+      apiVersion: deploy.k8s/v1
+      kind: Release
+      description: "Sample release controlled by Smith"
+      metadata:
+        name: release-v-4
+      spec:
+        replicas: 3
+        selector:
+          matchLabels:
+            app: k8s-deploy-test
+            version: "1.0"
+        template:
+          metadata:
+            labels:
+              app: k8s-deploy-test
+              version: "1.0"
+          spec:
+            containers:
+            - name: tea
+              image: nginxdemos/hello
+              ports:
+              - containerPort: 80
+  - name: release-v-5
+    spec:
+      apiVersion: deploy.k8s/v1
+      kind: Release
+      description: "Sample release controlled by Smith"
+      metadata:
+        name: release-v-5
+      spec:
+        replicas: 3
+        selector:
+          matchLabels:
+            app: k8s-deploy-test
+            version: "1.0"
+        template:
+          metadata:
+            labels:
+              app: k8s-deploy-test
+              version: "1.0"
+          spec:
+            containers:
+            - name: tea
+              image: nginxdemos/hello
+              ports:
+              - containerPort: 80                            
