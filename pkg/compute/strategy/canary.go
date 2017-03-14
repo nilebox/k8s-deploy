@@ -16,7 +16,7 @@ type Canary struct {
 	Clientset kubernetes.Interface
 }
 
-func (c *Canary) Run(release *deployv1.Release) error {
+func (c *Canary) Run(compute *deployv1.Compute) error {
 	trackLabel := "track"
 	canaryTrack := "canary"
 	stableTrack := "stable"
@@ -24,13 +24,13 @@ func (c *Canary) Run(release *deployv1.Release) error {
 	// First ensure that canary deployment object exists
 	canaryDeployment := &v1beta1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: release.Metadata.Namespace,
-			Name:      release.Metadata.Name + "-canary",
+			Namespace: compute.Metadata.Namespace,
+			Name:      compute.Metadata.Name + "-canary",
 		},
 		Spec: v1beta1.DeploymentSpec{
-			Replicas: release.Spec.Replicas,
-			Selector: c.selectorWithLabel(release.Spec.Selector, trackLabel, canaryTrack),
-			Template: c.podTemplateWithLabel(release.Spec.Template, trackLabel, canaryTrack),
+			Replicas: compute.Spec.Replicas,
+			Selector: c.selectorWithLabel(compute.Spec.Selector, trackLabel, canaryTrack),
+			Template: c.podTemplateWithLabel(compute.Spec.Template, trackLabel, canaryTrack),
 		},
 	}
 	err := c.ensureDeploymentExists(canaryDeployment)
@@ -41,18 +41,18 @@ func (c *Canary) Run(release *deployv1.Release) error {
 
 	// TODO: healthchecks
 	log.Printf("Emulate waiting for health check")
-	time.Sleep(15 * time.Second) // Wait until the app starts and creates the Release TPR
+	time.Sleep(15 * time.Second) // Wait until the app starts and creates the Compute TPR
 
 	// Check if stable deployment object exists too
 	stableDeployment := &v1beta1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: release.Metadata.Namespace,
-			Name:      release.Metadata.Name + "-stable",
+			Namespace: compute.Metadata.Namespace,
+			Name:      compute.Metadata.Name + "-stable",
 		},
 		Spec: v1beta1.DeploymentSpec{
-			Replicas: release.Spec.Replicas,
-			Selector: c.selectorWithLabel(release.Spec.Selector, trackLabel, stableTrack),
-			Template: c.podTemplateWithLabel(release.Spec.Template, trackLabel, stableTrack),
+			Replicas: compute.Spec.Replicas,
+			Selector: c.selectorWithLabel(compute.Spec.Selector, trackLabel, stableTrack),
+			Template: c.podTemplateWithLabel(compute.Spec.Template, trackLabel, stableTrack),
 		},
 	}
 	err = c.ensureDeploymentExists(stableDeployment)

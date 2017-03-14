@@ -18,7 +18,7 @@ import (
 	apiv1 "k8s.io/client-go/pkg/api/v1"
 )
 
-func TestCanaryRelease(t *testing.T) {
+func TestCanaryCompute(t *testing.T) {
 	log.Printf("Start\n")
 	config := configFromEnv()
 
@@ -34,7 +34,7 @@ func TestCanaryRelease(t *testing.T) {
 	}()
 	log.Printf("Finish\n")
 
-	time.Sleep(5 * time.Second) // Wait until the app starts and creates the Release TPR
+	time.Sleep(5 * time.Second) // Wait until the app starts and creates the Compute TPR
 
 	tprclient, _, err := client.NewClient(config)
 
@@ -42,29 +42,29 @@ func TestCanaryRelease(t *testing.T) {
 		panic(err)
 	}
 
-	var release deployv1.Release
+	var compute deployv1.Compute
 
 	err = tprclient.Get().
-		Resource(deployv1.ReleaseResourcePath).
+		Resource(deployv1.ComputeResourcePath).
 		Namespace(api.NamespaceDefault).
-		Name("release2").
-		Do().Into(&release)
+		Name("compute2").
+		Do().Into(&compute)
 
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Printf("NOT FOUND: release2 instance\n")
+			log.Printf("NOT FOUND: compute2 instance\n")
 
 			replicas := int32(3)
 			// Create an instance of our TPR
-			release := &deployv1.Release{
+			compute := &deployv1.Compute{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: deployv1.ReleaseResourceGroupVersion,
-					Kind:       deployv1.ReleaseResourceKind,
+					APIVersion: deployv1.ComputeResourceGroupVersion,
+					Kind:       deployv1.ComputeResourceKind,
 				},
 				Metadata: apiv1.ObjectMeta{
-					Name: "release2",
+					Name: "compute2",
 				},
-				Spec: deployv1.ReleaseSpec{
+				Spec: deployv1.ComputeSpec{
 					Replicas: &replicas,
 					Selector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{
@@ -81,11 +81,11 @@ func TestCanaryRelease(t *testing.T) {
 						},
 						Spec: apiv1.PodSpec{
 							Containers: []apiv1.Container{
-								apiv1.Container{
+								{
 									Name:  "tea",
 									Image: "nginxdemos/hello",
 									Ports: []apiv1.ContainerPort{
-										apiv1.ContainerPort{
+										{
 											ContainerPort: 80,
 										},
 									},
@@ -96,11 +96,11 @@ func TestCanaryRelease(t *testing.T) {
 				},
 			}
 
-			var result deployv1.Release
+			var result deployv1.Compute
 			err = tprclient.Post().
-				Resource(deployv1.ReleaseResourcePath).
+				Resource(deployv1.ComputeResourcePath).
 				Namespace(api.NamespaceDefault).
-				Body(release).
+				Body(compute).
 				Do().Into(&result)
 
 			if err != nil {
@@ -111,14 +111,14 @@ func TestCanaryRelease(t *testing.T) {
 			panic(err)
 		}
 	} else {
-		log.Printf("GET: %#v\n", release)
+		log.Printf("GET: %#v\n", compute)
 	}
 
 	// // Fetch a list of our TPRs
-	// releaseList := deployv1.ReleaseList{}
-	// err = tprclient.Get().Resource(deployv1.ReleaseResourcePath).Do().Into(&releaseList)
+	// computeList := deployv1.ComputeList{}
+	// err = tprclient.Get().Resource(deployv1.ComputeResourcePath).Do().Into(&computeList)
 	// if err != nil {
 	// 	panic(err)
 	// }
-	// log.Printf("LIST: %#v\n", releaseList)
+	// log.Printf("LIST: %#v\n", computeList)
 }

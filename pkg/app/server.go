@@ -7,7 +7,7 @@ import (
 
 	deployv1 "github.com/nilebox/k8s-deploy/pkg/apis/v1"
 	"github.com/nilebox/k8s-deploy/pkg/client"
-	"github.com/nilebox/k8s-deploy/pkg/release"
+	"github.com/nilebox/k8s-deploy/pkg/compute"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,51 +34,51 @@ func (s *Server) Run(ctx context.Context) error {
 		return err
 	}
 
-	log.Printf("Initializing Release client")
-	releaseClient, releaseScheme, err := client.NewClient(s.RestConfig)
+	log.Printf("Initializing Compute client")
+	computeClient, computeScheme, err := client.NewClient(s.RestConfig)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Ensure ThirdPartyResource Release exists")
-	// Ensure ThirdPartyResource Release exists
-	err = ensureReleaseResourceExists(clientset)
+	log.Printf("Ensure ThirdPartyResource Compute exists")
+	// Ensure ThirdPartyResource Compute exists
+	err = ensureComputeResourceExists(clientset)
 	if err != nil {
 		// TODO retry
-		log.Printf("Failed to create resource %s: %v", deployv1.ReleaseResourceName, err)
+		log.Printf("Failed to create resource %s: %v", deployv1.ComputeResourceName, err)
 		return err
 	}
 
-	log.Printf("Watch Release objects")
-	// Watch Release objects
-	handler := release.NewHandler(releaseClient, clientset)
-	releaseInformer, err := watchReleases(ctx, releaseClient, releaseScheme, handler)
+	log.Printf("Watch Compute objects")
+	// Watch Compute objects
+	handler := compute.NewHandler(computeClient, clientset)
+	computeInformer, err := watchComputes(ctx, computeClient, computeScheme, handler)
 	if err != nil {
-		log.Printf("Failed to register watch for Release resource: %v", err)
+		log.Printf("Failed to register watch for Compute resource: %v", err)
 		return err
 	}
 
 	log.Printf("WaitForCacheSync")
-	// We must wait for releaseInformer to populate its cache to avoid reading from an empty cache
+	// We must wait for computeInformer to populate its cache to avoid reading from an empty cache
 	// in case of resource-generated evxents.
-	if !cache.WaitForCacheSync(ctx.Done(), releaseInformer.HasSynced) {
-		return errors.New("wait for Release Informer was cancelled")
+	if !cache.WaitForCacheSync(ctx.Done(), computeInformer.HasSynced) {
+		return errors.New("wait for Compute Informer was cancelled")
 	}
 
 	<-ctx.Done()
 	return ctx.Err()
 }
 
-func ensureReleaseResourceExists(clientset kubernetes.Interface) error {
+func ensureComputeResourceExists(clientset kubernetes.Interface) error {
 	// initialize third party resource if it does not exist
-	tpr, err := clientset.ExtensionsV1beta1().ThirdPartyResources().Get(deployv1.ReleaseResourceName, metav1.GetOptions{})
+	tpr, err := clientset.ExtensionsV1beta1().ThirdPartyResources().Get(deployv1.ComputeResourceName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			log.Printf("NOT FOUND: releases TPR\n")
+			log.Printf("NOT FOUND: computes TPR\n")
 
 			tpr := &v1beta1.ThirdPartyResource{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: deployv1.ReleaseResourceName,
+					Name: deployv1.ComputeResourceName,
 					// This is for Smith support https://github.com/atlassian/smith/blob/master/docs/design/managing-resources.md
 					Annotations: map[string]string{
 						"smith.atlassian.com/TprReadyWhenFieldPath":  "status.state",
@@ -86,9 +86,9 @@ func ensureReleaseResourceExists(clientset kubernetes.Interface) error {
 					},
 				},
 				Versions: []v1beta1.APIVersion{
-					{Name: deployv1.ReleaseResourceVersion},
+					{Name: deployv1.ComputeResourceVersion},
 				},
-				Description: deployv1.ReleaseResourceDescription,
+				Description: deployv1.ComputeResourceDescription,
 			}
 
 			result, err := clientset.ExtensionsV1beta1().ThirdPartyResources().Create(tpr)
@@ -105,12 +105,12 @@ func ensureReleaseResourceExists(clientset kubernetes.Interface) error {
 	return nil
 }
 
-func watchReleases(ctx context.Context, releaseClient cache.Getter, releaseScheme *runtime.Scheme, handler *release.ReleaseEventHandler) (cache.Controller, error) {
-	parameterCodec := runtime.NewParameterCodec(releaseScheme)
+func watchComputes(ctx context.Context, computeClient cache.Getter, computeScheme *runtime.Scheme, handler *compute.ComputeEventHandler) (cache.Controller, error) {
+	parameterCodec := runtime.NewParameterCodec(computeScheme)
 
 	source := newListWatchFromClient(
-		releaseClient,
-		deployv1.ReleaseResourcePath,
+		computeClient,
+		deployv1.ComputeResourcePath,
 		api.NamespaceAll,
 		fields.Everything(),
 		parameterCodec)
@@ -119,7 +119,7 @@ func watchReleases(ctx context.Context, releaseClient cache.Getter, releaseSchem
 		source,
 
 		// The object type.
-		&deployv1.Release{},
+		&deployv1.Compute{},
 
 		// resyncPeriod
 		// Every resyncPeriod, all resources in the cache will retrigger events.
@@ -132,12 +132,12 @@ func watchReleases(ctx context.Context, releaseClient cache.Getter, releaseSchem
 
 	// store can be used to List and Get
 	// NEVER modify objects from the store. It's a read-only, local cache.
-	log.Println("listing releases from store:")
+	log.Println("listing computes from store:")
 	for _, obj := range store.List() {
-		release := obj.(*deployv1.Release)
+		compute := obj.(*deployv1.Compute)
 
 		// This will likely be empty the first run, but may not
-		log.Printf("Existing release: %#v\n", release)
+		log.Printf("Existing compute: %#v\n", compute)
 	}
 
 	go controller.Run(ctx.Done())
@@ -147,8 +147,8 @@ func watchReleases(ctx context.Context, releaseClient cache.Getter, releaseSchem
 
 // newListWatchFromClient is a copy of cache.NewListWatchFromClient() method with custom codec
 // Cannot use cache.NewListWatchFromClient() because it uses global api.ParameterCodec which uses global
-// api.Scheme which does not know about custom types (Release in our case) group/version.
-// cache.NewListWatchFromClient(releaseClient, deployv1.ReleaseResourcePath, apiv1.NamespaceAll, fields.Everything())
+// api.Scheme which does not know about custom types (Compute in our case) group/version.
+// cache.NewListWatchFromClient(computeClient, deployv1.ComputeResourcePath, apiv1.NamespaceAll, fields.Everything())
 func newListWatchFromClient(c cache.Getter, resource string, namespace string, fieldSelector fields.Selector, paramCodec runtime.ParameterCodec) *cache.ListWatch {
 	listFunc := func(options metav1.ListOptions) (runtime.Object, error) {
 		return c.Get().

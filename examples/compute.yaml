@@ -1,8 +1,8 @@
-apiVersion: deploy.k8s/v1
-kind: Release
-description: "Sample release"
+apiVersion: resource.atlassian.com/v1
+kind: Compute
+description: "Sample compute"
 metadata:
-  name: release-example-1
+  name: compute-example-1
 spec:
   replicas: 3
   selector:

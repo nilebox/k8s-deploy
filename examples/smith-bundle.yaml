@@ -1,18 +1,18 @@
 apiVersion: smith.atlassian.com/v1
 kind: Bundle
 metadata:
-  name: release-graph
+  name: compute-graph
 spec:
   resources:
-  - name: release-v-1
+  - name: compute-v-1
     dependsOn:
-      - release-v-3
+      - compute-v-3
     spec:
-      apiVersion: deploy.k8s/v1
-      kind: Release
-      description: "Sample release controlled by Smith"
+      apiVersion: resource.atlassian.com/v1
+      kind: Compute
+      description: "Sample compute controlled by Smith"
       metadata:
-        name: release-v-1
+        name: compute-v-1
       spec:
         replicas: 3
         selector:
@@ -30,13 +30,13 @@ spec:
               image: nginxdemos/hello
               ports:
               - containerPort: 80
-  - name: release-v-2
+  - name: compute-v-2
     spec:
-      apiVersion: deploy.k8s/v1
-      kind: Release
-      description: "Sample release controlled by Smith"
+      apiVersion: resource.atlassian.com/v1
+      kind: Compute
+      description: "Sample compute controlled by Smith"
       metadata:
-        name: release-v-2
+        name: compute-v-2
       spec:
         replicas: 3
         selector:
@@ -54,15 +54,15 @@ spec:
               image: nginxdemos/hello
               ports:
               - containerPort: 80
-  - name: release-v-3
+  - name: compute-v-3
     dependsOn:
-      - release-v-2
+      - compute-v-2
     spec:
-      apiVersion: deploy.k8s/v1
-      kind: Release
-      description: "Sample release controlled by Smith"
+      apiVersion: resource.atlassian.com/v1
+      kind: Compute
+      description: "Sample compute controlled by Smith"
       metadata:
-        name: release-v-3
+        name: compute-v-3
       spec:
         replicas: 3
         selector:
@@ -80,15 +80,15 @@ spec:
               image: nginxdemos/hello
               ports:
               - containerPort: 80
-  - name: release-v-4
+  - name: compute-v-4
     dependsOn:
-      - release-v-5
+      - compute-v-5
     spec:
-      apiVersion: deploy.k8s/v1
-      kind: Release
-      description: "Sample release controlled by Smith"
+      apiVersion: resource.atlassian.com/v1
+      kind: Compute
+      description: "Sample compute controlled by Smith"
       metadata:
-        name: release-v-4
+        name: compute-v-4
       spec:
         replicas: 3
         selector:
@@ -106,13 +106,13 @@ spec:
               image: nginxdemos/hello
               ports:
               - containerPort: 80
-  - name: release-v-5
+  - name: compute-v-5
     spec:
-      apiVersion: deploy.k8s/v1
-      kind: Release
-      description: "Sample release controlled by Smith"
+      apiVersion: resource.atlassian.com/v1
+      kind: Compute
+      description: "Sample compute controlled by Smith"
       metadata:
-        name: release-v-5
+        name: compute-v-5
       spec:
         replicas: 3
         selector:

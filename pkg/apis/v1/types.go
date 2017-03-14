@@ -11,19 +11,19 @@ import (
 )
 
 const (
-	ReleaseDomain              = "deploy.k8s"
-	ReleaseResourceDescription = "Custom releases support (Canary, Blue-green)"
-	ReleaseResourceGroup       = ReleaseDomain
+	ComputeDomain              = "resource.atlassian.com"
+	ComputeResourceDescription = "Custom computes support (Canary, Blue-green)"
+	ComputeResourceGroup       = ComputeDomain
 
-	ReleaseResourcePath         = "releases"
-	ReleaseResourceName         = "release." + ReleaseDomain
-	ReleaseResourceVersion      = "v1"
-	ReleaseResourceKind         = "Release"
-	ReleaseResourceGroupVersion = ReleaseResourceGroup + "/" + ReleaseResourceVersion
+	ComputeResourcePath         = "computes"
+	ComputeResourceName         = "compute." + ComputeDomain
+	ComputeResourceVersion      = "v1"
+	ComputeResourceKind         = "Compute"
+	ComputeResourceGroupVersion = ComputeResourceGroup + "/" + ComputeResourceVersion
 )
 
-// Release enables declarative updates for Pods and ReplicaSets.
-type Release struct {
+// Compute enables declarative updates for Pods and ReplicaSets.
+type Compute struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// *** SECRET KNOWLEDGE ***: Don't call the field below ObjectMeta, it will blow up the JSON deserialization
@@ -33,45 +33,45 @@ type Release struct {
 	// +optional
 	Metadata apiv1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	// Specification of the desired behavior of the Release.
+	// Specification of the desired behavior of the Compute.
 	// +optional
-	Spec ReleaseSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	Spec ComputeSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 
-	// Most recently observed status of the Release.
+	// Most recently observed status of the Compute.
 	// +optional
-	Status ReleaseStatus `json:"status,omitempty"`
+	Status ComputeStatus `json:"status,omitempty"`
 }
 
-type ReleaseStatus struct {
-	// State is the current state of the Release
-	State ReleaseState `json:"state,omitempty"`
+type ComputeStatus struct {
+	// State is the current state of the Compute
+	State ComputeState `json:"state,omitempty"`
 }
 
-type ReleaseState string
+type ComputeState string
 
-// These are valid release state
+// These are valid compute state
 const (
-	ReleaseStateReady   ReleaseState = "Ready"
-	ReleaseStateFailure ReleaseState = "Failure"
+	ComputeStateReady   ComputeState = "Ready"
+	ComputeStateFailure ComputeState = "Failure"
 )
 
-type ReleaseSpec struct {
+type ComputeSpec struct {
 	// Number of desired pods. This is a pointer to distinguish between explicit
 	// zero and not specified. Defaults to 1.
 	// +optional
 	Replicas *int32
 
 	// Label selector for pods. Existing ReplicaSets whose pods are
-	// selected by this will be the ones affected by this release.
+	// selected by this will be the ones affected by this compute.
 	// +optional
 	Selector *metav1.LabelSelector
 
 	// Template describes the pods that will be created.
 	Template apiv1.PodTemplateSpec
 
-	// The release strategy to use to replace existing pods with new ones.
+	// The compute strategy to use to replace existing pods with new ones.
 	// +optional
-	Strategy ReleaseStrategy
+	Strategy ComputeStrategy
 
 	// Minimum number of seconds for which a newly created pod should be ready
 	// without any of its container crashing, for it to be considered available.
@@ -84,51 +84,51 @@ type ReleaseSpec struct {
 	// +optional
 	RevisionHistoryLimit *int32
 
-	// Indicates that the release is paused and will not be processed by the
-	// release controller.
+	// Indicates that the compute is paused and will not be processed by the
+	// compute controller.
 	// +optional
 	Paused bool
 
-	// The config this release is rolling back to. Will be cleared after rollback is done.
+	// The config this compute is rolling back to. Will be cleared after rollback is done.
 	// +optional
 	RollbackTo *RollbackConfig
 
-	// The maximum time in seconds for a release to make progress before it
-	// is considered to be failed. The release controller will continue to
-	// process failed releases and a condition with a ProgressDeadlineExceeded
-	// reason will be surfaced in the release status. Once autoRollback is
-	// implemented, the release controller will automatically rollback failed
-	// releases. Note that progress will not be estimated during the time a
-	// release is paused. This is not set by default.
+	// The maximum time in seconds for a compute to make progress before it
+	// is considered to be failed. The compute controller will continue to
+	// process failed computes and a condition with a ProgressDeadlineExceeded
+	// reason will be surfaced in the compute status. Once autoRollback is
+	// implemented, the compute controller will automatically rollback failed
+	// computes. Note that progress will not be estimated during the time a
+	// compute is paused. This is not set by default.
 	ProgressDeadlineSeconds *int32
 }
 
-type ReleaseStrategy struct {
-	// Type of release. Can be "Recreate" or "RollingUpdate". Default is RollingUpdate.
+type ComputeStrategy struct {
+	// Type of compute. Can be "Recreate" or "RollingUpdate". Default is RollingUpdate.
 	// +optional
-	Type ReleaseStrategyType
+	Type ComputeStrategyType
 
-	// Rolling update config params. Present only if ReleaseStrategyType =
+	// Rolling update config params. Present only if ComputeStrategyType =
 	// RollingUpdate.
 	//---
 	// TODO: Update this to follow our convention for oneOf, whatever we decide it
 	// to be.
 	// +optional
-	Canary *CanaryRelease
+	Canary *CanaryCompute
 }
 
-type ReleaseStrategyType string
+type ComputeStrategyType string
 
 const (
-	// Manage two native Release objects with Canary strategy.
-	CanaryReleaseStrategyType ReleaseStrategyType = "Canary"
+	// Manage two native Compute objects with Canary strategy.
+	CanaryComputeStrategyType ComputeStrategyType = "Canary"
 
-	// Manage two native Release objects with Blue-green strategy.
-	BlueGreenReleaseStrategyType ReleaseStrategyType = "BlueGreen"
+	// Manage two native Compute objects with Blue-green strategy.
+	BlueGreenComputeStrategyType ComputeStrategyType = "BlueGreen"
 )
 
 // Spec to control the desired behavior of rolling update.
-type CanaryRelease struct {
+type CanaryCompute struct {
 	// The maximum number of pods that can be unavailable during the update.
 	// Value can be an absolute number (ex: 5) or a percentage of total pods at the start of update (ex: 10%).
 	// Absolute number is calculated from percentage by rounding down.
@@ -162,8 +162,8 @@ type RollbackConfig struct {
 	Revision int64
 }
 
-// ReleaseList is a list of Releases.
-type ReleaseList struct {
+// ComputeList is a list of Computes.
+type ComputeList struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// *** SECRET KNOWLEDGE ***: Don't call the field below ListMeta, it will blow up the JSON deserialization
@@ -173,27 +173,27 @@ type ReleaseList struct {
 	// +optional
 	Metadata metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	// Items is the list of Releases.
-	Items []Release `json:"items" protobuf:"bytes,2,rep,name=items"`
+	// Items is the list of Computes.
+	Items []Compute `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
 // Required to satisfy Object interface
-func (e *Release) GetObjectKind() schema.ObjectKind {
+func (e *Compute) GetObjectKind() schema.ObjectKind {
 	return &e.TypeMeta
 }
 
 // Required to satisfy ObjectMetaAccessor interface
-func (e *Release) GetObjectMeta() metav1.Object {
+func (e *Compute) GetObjectMeta() metav1.Object {
 	return &e.Metadata
 }
 
 // Required to satisfy Object interface
-func (el *ReleaseList) GetObjectKind() schema.ObjectKind {
+func (el *ComputeList) GetObjectKind() schema.ObjectKind {
 	return &el.TypeMeta
 }
 
 // Required to satisfy ListMetaAccessor interface
-func (el *ReleaseList) GetListMeta() metav1.List {
+func (el *ComputeList) GetListMeta() metav1.List {
 	return &el.Metadata
 }
 
@@ -201,41 +201,41 @@ func (el *ReleaseList) GetListMeta() metav1.List {
 // resources and ugorji. If/when these issues are resolved, the code below
 // should no longer be required.
 
-type ReleaseListCopy ReleaseList
-type ReleaseCopy Release
+type ComputeListCopy ComputeList
+type ComputeCopy Compute
 
-func (e *Release) UnmarshalJSON(data []byte) error {
-	tmp := ReleaseCopy{}
+func (e *Compute) UnmarshalJSON(data []byte) error {
+	tmp := ComputeCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		log.Printf("UnmarshalJSON Error")
 		return err
 	}
 	log.Printf("UnmarshalJSON: %s", tmp.Metadata.SelfLink)
-	tmp2 := Release(tmp)
+	tmp2 := Compute(tmp)
 	*e = tmp2
 	return nil
 }
 
-func (el *ReleaseList) UnmarshalJSON(data []byte) error {
-	tmp := ReleaseListCopy{}
+func (el *ComputeList) UnmarshalJSON(data []byte) error {
+	tmp := ComputeListCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		log.Printf("UnmarshalJSON Error")
 		return err
 	}
 	log.Printf("UnmarshalJSON: %s", tmp.Metadata.SelfLink)
-	tmp2 := ReleaseList(tmp)
+	tmp2 := ComputeList(tmp)
 	*el = tmp2
 	return nil
 }
 
-func (e *Release) UnmarshalText(data []byte) error {
+func (e *Compute) UnmarshalText(data []byte) error {
 	log.Printf("UnmarshalText")
 	return json.Unmarshal(data, e)
 }
 
-func (el *ReleaseList) UnmarshalText(data []byte) error {
+func (el *ComputeList) UnmarshalText(data []byte) error {
 	log.Printf("UnmarshalText")
 	return json.Unmarshal(data, el)
 }

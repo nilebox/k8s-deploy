@@ -5,8 +5,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-var _ runtime.Object = &ReleaseList{}
-var _ metav1.ListMetaAccessor = &ReleaseList{}
+var _ runtime.Object = &ComputeList{}
+var _ metav1.ListMetaAccessor = &ComputeList{}
 
-var _ runtime.Object = &Release{}
-var _ metav1.ObjectMetaAccessor = &Release{}
+var _ runtime.Object = &Compute{}
+var _ metav1.ObjectMetaAccessor = &Compute{}
